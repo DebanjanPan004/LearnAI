@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
-import { Send, Loader2, Sparkles, MessageSquare, Library, FileText, AlertCircle } from "lucide-react";
+import { Send, Loader2, Sparkles, Library, FileText } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { api } from "../services/api";
 
@@ -18,151 +18,157 @@ interface DocumentItem {
   type: string;
 }
 
+const sidebarPanel: React.CSSProperties = {
+  background: "rgba(22,51,39,0.6)",
+  border: "1px solid rgba(201,162,39,0.2)",
+  borderRadius: "8px",
+  padding: "20px",
+  backdropFilter: "blur(4px)",
+  height: "72vh",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const chatPanel: React.CSSProperties = {
+  background: "rgba(10,23,18,0.55)",
+  border: "1px solid rgba(201,162,39,0.2)",
+  borderRadius: "8px",
+  backdropFilter: "blur(4px)",
+  height: "72vh",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+};
+
 export function ChatPage() {
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       role: "model",
-      text: "Hello! I am your AI study assistant. Ask me anything about your uploaded notes, slides, or documents, and I'll fetch context directly from your library to explain the concepts!"
-    }
+      text: "Hello! I am your AI study assistant. Ask me anything about your uploaded notes, slides, or documents, and I'll fetch context directly from your library to explain the concepts!",
+    },
   ]);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch actual uploaded documents to list in the sources sidebar
   const { data: documents = [], isLoading: sidebarLoading } = useQuery<DocumentItem[]>({
     queryKey: ["documents"],
-    queryFn: async () => {
-      const res = await api.get("/documents");
-      return res.data.documents;
-    }
+    queryFn: async () => (await api.get("/documents")).data.documents,
   });
 
-  // Tutor chat mutation
   const chatMutation = useMutation({
-    mutationFn: async (askText: string) => {
-      const res = await api.post("/ai/chat", { question: askText });
-      return res.data; // returns { text: string, sources: string[] }
-    },
+    mutationFn: async (askText: string) => (await api.post("/ai/chat", { question: askText })).data,
     onSuccess: (data) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          role: "model",
-          text: data.text,
-          sources: data.sources
-        }
-      ]);
+      setMessages((prev) => [...prev, { id: `ai-${Date.now()}`, role: "model", text: data.text, sources: data.sources }]);
     },
     onError: (err: any) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `error-${Date.now()}`,
-          role: "model",
-          text: `⚠️ **Failed to connect:** ${err.response?.data?.message ?? "I ran into a server error. Please check if the backend is running."}`
-        }
-      ]);
-    }
+      setMessages((prev) => [...prev, {
+        id: `error-${Date.now()}`, role: "model",
+        text: `⚠️ **Failed to connect:** ${err.response?.data?.message ?? "Server error. Please check if the backend is running."}`,
+      }]);
+    },
   });
 
-  // Auto scroll to bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, chatMutation.isPending]);
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, chatMutation.isPending]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanQuestion = question.trim();
-    if (!cleanQuestion || chatMutation.isPending) return;
-
-    // Append user question
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `user-${Date.now()}`,
-        role: "user",
-        text: cleanQuestion
-      }
-    ]);
-    
+    const clean = question.trim();
+    if (!clean || chatMutation.isPending) return;
+    setMessages((prev) => [...prev, { id: `user-${Date.now()}`, role: "user", text: clean }]);
     setQuestion("");
-    chatMutation.mutate(cleanQuestion);
+    chatMutation.mutate(clean);
   };
 
   return (
     <>
       <PageHeader eyebrow="AI Tutor" title="Ask from your uploaded notes" />
-      
+
       <section className="grid min-h-[72vh] gap-5 xl:grid-cols-[0.8fr_2.2fr]">
-        
-        {/* Left sidebar: Indexed library status */}
-        <div className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 shadow-soft h-[72vh]">
-          <h2 className="font-bold text-ink flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-4">
-            <Library size={18} className="text-brand" /> Study Library Context
+
+        {/* ── Library Sidebar ── */}
+        <div style={sidebarPanel}>
+          <h2 style={{ fontFamily: "var(--font-display)", color: "#e7c766", fontSize: "18px", margin: "0 0 4px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Library size={17} style={{ color: "#c9a227" }} /> Study Library
           </h2>
-          
-          <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+          <div style={{ height: "1px", background: "linear-gradient(90deg, transparent, rgba(201,162,39,0.4), transparent)", margin: "10px 0 14px" }} />
+
+          <div className="flex-1 overflow-y-auto space-y-2 pr-1">
             {sidebarLoading ? (
               <div className="flex h-32 items-center justify-center">
-                <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                <Loader2 size={20} className="animate-spin" style={{ color: "#c9a227" }} />
               </div>
             ) : documents.length === 0 ? (
-              <div className="text-center py-8 text-xs text-slate-400 leading-relaxed">
+              <div style={{ textAlign: "center", padding: "32px 0", fontFamily: "var(--font-body)", fontSize: "13px", color: "rgba(231,199,102,0.4)", lineHeight: 1.6 }}>
                 <p>No documents uploaded yet.</p>
-                <p className="mt-1">Go to **Documents** to upload and enable active retrieval.</p>
+                <p style={{ marginTop: "6px" }}>Go to <strong>Documents</strong> to upload and enable active retrieval.</p>
               </div>
             ) : (
               documents.map((doc) => (
-                <div key={doc._id} className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2.5 text-xs text-slate-700">
-                  <FileText size={14} className="text-slate-400 flex-shrink-0" />
-                  <span className="truncate font-semibold" title={doc.title}>{doc.title}</span>
+                <div key={doc._id} style={{
+                  display: "flex", alignItems: "center", gap: "8px",
+                  padding: "8px 10px", borderRadius: "4px",
+                  border: "1px solid rgba(201,162,39,0.12)",
+                  background: "rgba(0,0,0,0.2)",
+                  fontFamily: "var(--font-body)", fontSize: "12px", color: "rgba(242,232,213,0.7)",
+                }}>
+                  <FileText size={13} style={{ color: "#c9a227", flexShrink: 0 }} />
+                  <span className="truncate" title={doc.title}>{doc.title}</span>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        {/* Right terminal: Conversational Stream */}
-        <div className="flex flex-col rounded-xl border border-slate-200 bg-white shadow-soft h-[72vh] overflow-hidden">
-          {/* Scrollable messages area */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50">
+        {/* ── Chat Panel ── */}
+        <div style={chatPanel}>
+
+          {/* Scrollable messages */}
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
             {messages.map((msg) => {
               const isAi = msg.role === "model";
               return (
-                <div key={msg.id} className={`flex gap-3.5 max-w-[85%] ${isAi ? "mr-auto" : "ml-auto flex-row-reverse"}`}>
+                <div key={msg.id} style={{ display: "flex", gap: "12px", maxWidth: "85%", marginLeft: isAi ? 0 : "auto", flexDirection: isAi ? "row" : "row-reverse" }}>
                   {/* Avatar */}
-                  <span className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-bold shadow-sm ${
-                    isAi ? "bg-blue-100 text-brand" : "bg-brand text-white"
-                  }`}>
-                    {isAi ? <Sparkles size={16} /> : "U"}
+                  <span style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0,
+                    background: isAi ? "rgba(31,69,54,0.8)" : "linear-gradient(135deg, #6b1f2a, #4a151d)",
+                    border: `1px solid ${isAi ? "rgba(201,162,39,0.3)" : "rgba(201,162,39,0.4)"}`,
+                  }}>
+                    {isAi ? <Sparkles size={15} color="#c9a227" /> : <span style={{ fontFamily: "var(--font-mono)", fontSize: "12px", color: "#e7c766" }}>U</span>}
                   </span>
 
-                  {/* Message Bubble */}
-                  <div className="space-y-2">
-                    <div className={`rounded-2xl px-4 py-3.5 text-sm shadow-soft leading-relaxed ${
-                      isAi 
-                        ? "bg-white border border-slate-100 text-slate-800 rounded-tl-none" 
-                        : "bg-brand text-white rounded-tr-none font-medium"
-                    }`}>
-                      <article className="prose prose-sm max-w-none text-inherit">
+                  {/* Bubble */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    <div style={{
+                      padding: "12px 16px",
+                      borderRadius: isAi ? "0 12px 12px 12px" : "12px 0 12px 12px",
+                      background: isAi ? "rgba(31,69,54,0.5)" : "rgba(107,31,42,0.6)",
+                      border: `1px solid ${isAi ? "rgba(201,162,39,0.18)" : "rgba(231,199,102,0.2)"}`,
+                      fontFamily: "var(--font-body)", fontSize: "14px", lineHeight: 1.7,
+                      color: isAi ? "#f2e8d5" : "#f2e8d5",
+                    }}>
+                      <article className="prose prose-sm max-w-none" style={{ color: "inherit" }}>
                         <ReactMarkdown>{msg.text}</ReactMarkdown>
                       </article>
                     </div>
 
-                    {/* Sources reference panel */}
+                    {/* Sources */}
                     {isAi && msg.sources && msg.sources.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5 pl-1.5">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mr-1">RAG Sources:</span>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", paddingLeft: "4px" }}>
+                        <span style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(201,162,39,0.5)", marginRight: "4px", alignSelf: "center" }}>
+                          Sources:
+                        </span>
                         {msg.sources.map((src) => (
-                          <span
-                            key={src}
-                            className="inline-flex items-center gap-1 rounded bg-slate-100 border border-slate-200 px-2 py-0.75 text-[10px] font-bold text-slate-600 shadow-soft"
-                          >
-                            <FileText size={10} className="text-slate-400" />
-                            {src}
+                          <span key={src} style={{
+                            display: "inline-flex", alignItems: "center", gap: "4px",
+                            padding: "2px 8px", borderRadius: "2px",
+                            background: "rgba(22,51,39,0.7)", border: "1px solid rgba(201,162,39,0.2)",
+                            fontFamily: "var(--font-mono)", fontSize: "9px", color: "#e7c766",
+                          }}>
+                            <FileText size={9} /> {src}
                           </span>
                         ))}
                       </div>
@@ -172,44 +178,61 @@ export function ChatPage() {
               );
             })}
 
-            {/* Typing Loader Indicator */}
             {chatMutation.isPending && (
-              <div className="flex gap-3.5 max-w-[80%] mr-auto items-center animate-pulse">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-100 text-brand text-sm shadow-sm">
-                  <Sparkles size={16} />
+              <div style={{ display: "flex", gap: "12px", maxWidth: "80%", alignItems: "center" }} className="animate-pulse">
+                <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "36px", height: "36px", borderRadius: "50%", background: "rgba(31,69,54,0.8)", border: "1px solid rgba(201,162,39,0.3)", flexShrink: 0 }}>
+                  <Sparkles size={15} color="#c9a227" />
                 </span>
-                <div className="rounded-2xl rounded-tl-none border border-slate-100 bg-white px-4.5 py-3 text-sm text-slate-500 shadow-soft flex items-center gap-1.5 font-medium">
-                  <Loader2 className="h-4.5 w-4.5 animate-spin text-brand" />
-                  Thinking and searching documents...
+                <div style={{ padding: "12px 16px", borderRadius: "0 12px 12px 12px", background: "rgba(31,69,54,0.5)", border: "1px solid rgba(201,162,39,0.18)", display: "flex", alignItems: "center", gap: "8px", fontFamily: "var(--font-body)", fontSize: "13px", color: "rgba(231,199,102,0.6)" }}>
+                  <Loader2 size={15} className="animate-spin" style={{ color: "#c9a227" }} />
+                  Searching your library…
                 </div>
               </div>
             )}
-            
+
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Form input dock */}
-          <div className="border-t border-slate-150 p-4 bg-white">
-            <form onSubmit={handleSubmit} className="flex gap-3">
+          {/* Input dock */}
+          <div style={{ borderTop: "1px solid rgba(201,162,39,0.15)", padding: "14px 16px", background: "rgba(10,23,18,0.5)" }}>
+            <form onSubmit={handleSubmit} style={{ display: "flex", gap: "10px" }}>
               <input
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 disabled={chatMutation.isPending}
-                className="focus-ring flex-1 min-w-0 rounded-lg border border-slate-200 px-4.5 py-3 text-sm placeholder:text-slate-400"
-                placeholder="Ask me a question (e.g. Explain Normalization in DBMS, or summarize process states)"
+                style={{
+                  flex: 1, minWidth: 0,
+                  background: "rgba(31,69,54,0.3)",
+                  border: "1px solid rgba(201,162,39,0.2)",
+                  borderRadius: "4px",
+                  padding: "10px 14px",
+                  fontFamily: "var(--font-body)", fontSize: "14px",
+                  color: "#f2e8d5", outline: "none",
+                }}
+                placeholder="Ask a question from your documents…"
+                onFocus={e => (e.target.style.borderColor = "rgba(201,162,39,0.5)")}
+                onBlur={e => (e.target.style.borderColor = "rgba(201,162,39,0.2)")}
               />
               <button
                 type="submit"
                 disabled={!question.trim() || chatMutation.isPending}
-                className="focus-ring inline-flex h-11.5 w-11.5 items-center justify-center rounded-lg bg-brand text-white transition hover:bg-blue-700 disabled:opacity-50"
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  width: "44px", height: "44px", borderRadius: "4px",
+                  background: "linear-gradient(135deg, #6b1f2a, #4a151d)",
+                  border: "1px solid rgba(201,162,39,0.3)",
+                  cursor: question.trim() && !chatMutation.isPending ? "pointer" : "not-allowed",
+                  opacity: !question.trim() || chatMutation.isPending ? 0.5 : 1,
+                  flexShrink: 0,
+                }}
                 aria-label="Send"
               >
-                <Send size={18} />
+                <Send size={17} color="#e7c766" />
               </button>
             </form>
           </div>
-
         </div>
+
       </section>
     </>
   );

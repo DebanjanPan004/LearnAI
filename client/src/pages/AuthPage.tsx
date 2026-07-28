@@ -18,414 +18,371 @@ interface AuthFormFields {
   otp?: string;
 }
 
+/* ── shared input style ── */
+const inputStyle: React.CSSProperties = {
+  width: "100%",
+  border: "none",
+  borderBottom: "1.5px solid rgba(107,31,42,0.35)",
+  background: "transparent",
+  fontFamily: "var(--font-body)",
+  fontSize: "15px",
+  color: "#241a10",
+  padding: "6px 2px 10px",
+  outline: "none",
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  fontFamily: "var(--font-mono)",
+  fontSize: "10px",
+  letterSpacing: "0.2em",
+  textTransform: "uppercase",
+  color: "#6b5a3a",
+  marginBottom: "6px",
+};
+
 export function AuthPage() {
   const [mode, setMode] = useState<AuthMode>("login");
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const currentToken = useSelector((state: RootState) => state.auth.token);
-  
-  // Track email for OTP verification state context
   const [unverifiedEmail, setUnverifiedEmail] = useState<string>("");
-
   const resetToken = searchParams.get("token");
 
-  // If token already exists in Redux/state, redirect to dashboard
-  useEffect(() => {
-    if (currentToken) {
-      navigate("/dashboard");
-    }
-  }, [currentToken, navigate]);
+  useEffect(() => { if (currentToken) navigate("/dashboard"); }, [currentToken, navigate]);
+  useEffect(() => { if (resetToken) setMode("reset-password"); }, [resetToken]);
 
-  // If reset password token is in URL, switch to reset mode
-  useEffect(() => {
-    if (resetToken) {
-      setMode("reset-password");
-    }
-  }, [resetToken]);
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    formState: { errors }
-  } = useForm<AuthFormFields>({
-    defaultValues: {
-      email: "",
-      name: "",
-      password: "",
-      confirmPassword: "",
-      otp: ""
-    }
-  });
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } =
+    useForm<AuthFormFields>({ defaultValues: { email: "", name: "", password: "", confirmPassword: "", otp: "" } });
 
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Watch password field to validate confirmPassword matches
   const passwordValue = watch("password");
 
-  // Mutation for login
   const loginMutation = useMutation({
-    mutationFn: async (data: AuthFormFields) => {
-      const res = await api.post("/auth/login", {
-        email: data.email,
-        password: data.password
-      });
-      return res.data;
+    mutationFn: async (data: AuthFormFields) => (await api.post("/auth/login", { email: data.email, password: data.password })).data,
+    onSuccess: (data) => {
+      dispatch(setCredentials({ token: data.token, user: data.user }));
+      navigate("/dashboard");
     },
-    onSuccess: (data, variables) => {
-      if (data.user && !data.user.emailVerified) {
-        // If account not verified, redirect to OTP verify state
-        setUnverifiedEmail(variables.email);
-        setErrorMessage("Please verify your email address to continue.");
-        setMode("otp-verify");
-        setValue("otp", "");
-      } else {
-        dispatch(setCredentials({ token: data.token, user: data.user }));
-        navigate("/dashboard");
-      }
-    },
-    onError: (err: any) => {
-      setErrorMessage(err.response?.data?.message ?? "Invalid email or password.");
-    }
+    onError: (err: any) => setErrorMessage(err.response?.data?.message ?? "Invalid email or password."),
   });
 
-  // Mutation for registration
   const registerMutation = useMutation({
-    mutationFn: async (data: AuthFormFields) => {
-      const res = await api.post("/auth/register", {
-        name: data.name,
-        email: data.email,
-        password: data.password
-      });
-      return res.data;
-    },
-    onSuccess: (data, variables) => {
-      setUnverifiedEmail(variables.email);
-      setSuccessMessage("Account created successfully! We've sent a verification code to your email.");
-      setMode("otp-verify");
-      setValue("otp", "");
-      setErrorMessage(null);
+    mutationFn: async (data: AuthFormFields) => (await api.post("/auth/register", { name: data.name, email: data.email, password: data.password })).data,
+    onSuccess: (data) => {
+      dispatch(setCredentials({ token: data.token, user: data.user }));
+      navigate("/dashboard");
     },
     onError: (err: any) => {
       const valErrors = err.response?.data?.errors;
-      if (valErrors && Array.isArray(valErrors)) {
-        setErrorMessage(valErrors.map((e: any) => e.msg).join(", "));
-      } else {
-        setErrorMessage(err.response?.data?.message ?? "Registration failed. Try again.");
-      }
-    }
+      setErrorMessage(valErrors && Array.isArray(valErrors)
+        ? valErrors.map((e: any) => e.msg).join(", ")
+        : err.response?.data?.message ?? "Registration failed. Try again.");
+    },
   });
 
-  // Mutation for OTP verification
   const verifyMutation = useMutation({
-    mutationFn: async (data: AuthFormFields) => {
-      const res = await api.post("/auth/verify-email", {
-        email: unverifiedEmail || data.email,
-        token: data.otp
-      });
-      return res.data;
-    },
+    mutationFn: async (data: AuthFormFields) =>
+      (await api.post("/auth/verify-email", { email: unverifiedEmail || data.email, token: data.otp })).data,
     onSuccess: (data) => {
-      setSuccessMessage("Email verified successfully! Logging you in...");
+      setSuccessMessage("Email verified! Logging you in…");
       setTimeout(() => {
-        // Auto-login with credentials returned or ask user to switch to login tab
         dispatch(setCredentials({ token: loginMutation.data?.token || registerMutation.data?.token || "", user: data.user }));
         navigate("/dashboard");
       }, 1500);
     },
-    onError: (err: any) => {
-      setErrorMessage(err.response?.data?.message ?? "Invalid or expired verification code.");
-    }
+    onError: (err: any) => setErrorMessage(err.response?.data?.message ?? "Invalid or expired verification code."),
   });
 
-  // Mutation for forgot password
   const forgotMutation = useMutation({
-    mutationFn: async (data: AuthFormFields) => {
-      const res = await api.post("/auth/forgot-password", {
-        email: data.email
-      });
-      return res.data;
-    },
-    onSuccess: () => {
-      setSuccessMessage("If that email exists, we have sent a reset password link.");
-      setErrorMessage(null);
-    },
-    onError: (err: any) => {
-      setErrorMessage(err.response?.data?.message ?? "Failed to send reset email.");
-    }
+    mutationFn: async (data: AuthFormFields) => (await api.post("/auth/forgot-password", { email: data.email })).data,
+    onSuccess: () => { setSuccessMessage("If that email exists, we've sent a reset link."); setErrorMessage(null); },
+    onError: (err: any) => setErrorMessage(err.response?.data?.message ?? "Failed to send reset email."),
   });
 
-  // Mutation for reset password
   const resetMutation = useMutation({
-    mutationFn: async (data: AuthFormFields) => {
-      const res = await api.post("/auth/reset-password", {
-        token: resetToken,
-        password: data.password
-      });
-      return res.data;
-    },
+    mutationFn: async (data: AuthFormFields) => (await api.post("/auth/reset-password", { token: resetToken, password: data.password })).data,
     onSuccess: () => {
-      setSuccessMessage("Password reset successfully! You can now log in.");
-      setErrorMessage(null);
-      setTimeout(() => {
-        setMode("login");
-        reset();
-      }, 2000);
+      setSuccessMessage("Password reset! You can now log in.");
+      setTimeout(() => { setMode("login"); reset(); }, 2000);
     },
-    onError: (err: any) => {
-      setErrorMessage(err.response?.data?.message ?? "Failed to reset password. The link may have expired.");
-    }
+    onError: (err: any) => setErrorMessage(err.response?.data?.message ?? "Failed to reset password. Link may have expired."),
   });
 
   const onSubmit = (data: AuthFormFields) => {
-    setErrorMessage(null);
-    setSuccessMessage(null);
-    
-    if (mode === "login") {
-      loginMutation.mutate(data);
-    } else if (mode === "register") {
-      registerMutation.mutate(data);
-    } else if (mode === "otp-verify") {
-      verifyMutation.mutate(data);
-    } else if (mode === "forgot-password") {
-      forgotMutation.mutate(data);
-    } else if (mode === "reset-password") {
-      resetMutation.mutate(data);
-    }
+    setErrorMessage(null); setSuccessMessage(null);
+    if (mode === "login")            loginMutation.mutate(data);
+    else if (mode === "register")    registerMutation.mutate(data);
+    else if (mode === "otp-verify")  verifyMutation.mutate(data);
+    else if (mode === "forgot-password") forgotMutation.mutate(data);
+    else if (mode === "reset-password")  resetMutation.mutate(data);
   };
 
-  const isLoading =
-    loginMutation.isPending ||
-    registerMutation.isPending ||
-    verifyMutation.isPending ||
-    forgotMutation.isPending ||
-    resetMutation.isPending;
+  const isLoading = loginMutation.isPending || registerMutation.isPending ||
+    verifyMutation.isPending || forgotMutation.isPending || resetMutation.isPending;
+
+  const btnLabel = isLoading ? "Processing…"
+    : mode === "login" ? "Sign In"
+    : mode === "register" ? "Create Account"
+    : mode === "otp-verify" ? "Verify Account"
+    : mode === "forgot-password" ? "Send Reset Link"
+    : "Save New Password";
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-paper px-4 py-12">
-      <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-soft">
-        <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-brand text-white">
-            <BookOpen size={22} />
+    <main
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "40px 16px",
+      }}
+    >
+      {/* Wordmark above card */}
+      <p style={{
+        fontFamily: "var(--font-mono)",
+        fontSize: "11px",
+        letterSpacing: "0.35em",
+        textTransform: "uppercase",
+        color: "rgba(231,199,102,0.6)",
+        marginBottom: "24px",
+      }}>
+        LearnAI
+      </p>
+
+      {/* Parchment card */}
+      <section
+        style={{
+          position: "relative",
+          width: "min(90vw, 380px)",
+          background: "linear-gradient(160deg, #f2e8d5 0%, #e6d9bd 100%)",
+          borderRadius: "6px",
+          color: "#241a10",
+          boxShadow: "0 50px 90px -25px rgba(0,0,0,.65), 0 0 0 1px rgba(201,162,39,.35)",
+          padding: "40px 36px 32px",
+        }}
+      >
+        {/* inner ornament border */}
+        <span style={{
+          position: "absolute", inset: "10px",
+          border: "1px solid rgba(201,162,39,0.3)",
+          borderRadius: "3px", pointerEvents: "none",
+        }} />
+
+        {/* Logo + Title */}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+          <span style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: "42px", height: "42px", borderRadius: "8px",
+            background: "linear-gradient(135deg, #6b1f2a, #4a151d)",
+            boxShadow: "0 0 0 1px rgba(201,162,39,0.4)",
+          }}>
+            <BookOpen size={20} color="#e7c766" />
           </span>
           <div>
-            <h1 className="text-2xl font-bold text-ink">LearnAI</h1>
-            <p className="text-sm text-slate-500">Upload. Learn. Practice. Master.</p>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "22px", margin: 0, color: "#241a10", letterSpacing: "0.04em" }}>
+              LearnAI
+            </h1>
+            <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.2em", textTransform: "uppercase", color: "#6b5a3a", margin: 0 }}>
+              Upload · Learn · Master
+            </p>
           </div>
         </div>
 
-        {/* Global Error Alert */}
+        {/* Error Alert */}
         {errorMessage && (
-          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm text-red-700">
-            <AlertCircle className="mt-0.5 h-4.5 w-4.5 flex-shrink-0" />
+          <div style={{
+            display: "flex", alignItems: "flex-start", gap: "8px",
+            background: "rgba(107,31,42,0.12)", border: "1px solid rgba(107,31,42,0.35)",
+            borderRadius: "4px", padding: "10px 12px", marginBottom: "16px",
+            fontFamily: "var(--font-body)", fontSize: "13px", color: "#6b1f2a",
+          }}>
+            <AlertCircle size={15} style={{ flexShrink: 0, marginTop: "1px" }} />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* Global Success Alert */}
+        {/* Success Alert */}
         {successMessage && (
-          <div className="mb-4 flex items-start gap-2.5 rounded-lg border border-emerald-200 bg-emerald-50 p-3.5 text-sm text-emerald-700">
-            <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 flex-shrink-0" />
+          <div style={{
+            display: "flex", alignItems: "flex-start", gap: "8px",
+            background: "rgba(31,69,54,0.12)", border: "1px solid rgba(31,69,54,0.4)",
+            borderRadius: "4px", padding: "10px 12px", marginBottom: "16px",
+            fontFamily: "var(--font-body)", fontSize: "13px", color: "#163327",
+          }}>
+            <CheckCircle2 size={15} style={{ flexShrink: 0, marginTop: "1px" }} />
             <span>{successMessage}</span>
           </div>
         )}
 
-        {/* TAB NAVIGATION FOR LOGIN / REGISTER */}
+        {/* Tab navigation for login/register */}
         {(mode === "login" || mode === "register") && (
-          <div className="mb-6 flex border-b border-slate-200">
-            <button
-              onClick={() => {
-                setMode("login");
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 pb-3 text-center text-sm font-semibold transition-all ${
-                mode === "login"
-                  ? "border-b-2 border-brand text-brand"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              Log In
-            </button>
-            <button
-              onClick={() => {
-                setMode("register");
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className={`flex-1 pb-3 text-center text-sm font-semibold transition-all ${
-                mode === "register"
-                  ? "border-b-2 border-brand text-brand"
-                  : "text-slate-500 hover:text-slate-800"
-              }`}
-            >
-              Sign Up
-            </button>
+          <div style={{ display: "flex", borderBottom: "1px solid rgba(107,31,42,0.2)", marginBottom: "24px" }}>
+            {(["login", "register"] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => { setMode(m); setErrorMessage(null); setSuccessMessage(null); }}
+                style={{
+                  flex: 1, paddingBottom: "10px", background: "none", border: "none",
+                  fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.18em",
+                  textTransform: "uppercase", cursor: "pointer",
+                  color: mode === m ? "#6b1f2a" : "rgba(107,42,20,0.45)",
+                  borderBottom: mode === m ? "2px solid #6b1f2a" : "2px solid transparent",
+                  marginBottom: "-1px", transition: "all 200ms",
+                }}
+              >
+                {m === "login" ? "Log In" : "Sign Up"}
+              </button>
+            ))}
           </div>
         )}
 
-        {/* FORM STATE SWITCHER */}
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          
-          {/* Back button for sub-modes */}
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+
+          {/* Back link for sub-modes */}
           {(mode === "forgot-password" || mode === "otp-verify") && (
-            <button
-              type="button"
-              onClick={() => {
-                setMode("login");
-                setErrorMessage(null);
-                setSuccessMessage(null);
-              }}
-              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-brand"
+            <button type="button"
+              onClick={() => { setMode("login"); setErrorMessage(null); setSuccessMessage(null); }}
+              style={{ display: "inline-flex", alignItems: "center", gap: "4px", background: "none", border: "none",
+                cursor: "pointer", fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.15em",
+                textTransform: "uppercase", color: "rgba(107,31,42,0.6)", padding: 0 }}
             >
-              <ArrowLeft size={14} /> Back to Login
+              <ArrowLeft size={12} /> Back to login
             </button>
           )}
 
-          {/* Form Header Info for non-tab screens */}
           {mode === "forgot-password" && (
-            <div className="mb-2">
-              <h2 className="text-lg font-bold text-ink">Forgot Password?</h2>
-              <p className="text-xs text-slate-500">
-                Enter your email address and we'll send you a password reset link.
-              </p>
-            </div>
-          )}
-
-          {mode === "otp-verify" && (
-            <div className="mb-2">
-              <h2 className="text-lg font-bold text-ink">Verify Your Email</h2>
-              <p className="text-xs text-slate-500">
-                We've sent a 6-digit verification OTP code to <strong className="text-slate-700">{unverifiedEmail}</strong>.
+            <div>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "22px", color: "#241a10", margin: "0 0 4px" }}>Forgot Password?</h2>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "#6b5a3a", margin: 0 }}>
+                Enter your email and we'll send you a reset link.
               </p>
             </div>
           )}
 
           {mode === "reset-password" && (
-            <div className="mb-2">
-              <h2 className="text-lg font-bold text-ink">Reset Your Password</h2>
-              <p className="text-xs text-slate-500">Enter a secure new password for your account.</p>
+            <div>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "22px", color: "#241a10", margin: "0 0 4px" }}>Reset Password</h2>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "#6b5a3a", margin: 0 }}>
+                Enter a secure new password for your account.
+              </p>
             </div>
           )}
 
-          {/* Fields depending on mode */}
+          {/* Name field (register) */}
           {mode === "register" && (
             <div>
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Full Name</label>
-              <input
-                className="focus-ring mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm"
-                placeholder="John Doe"
-                type="text"
-                {...register("name", { required: "Name is required" })}
-              />
-              {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name.message}</p>}
+              <label style={labelStyle}>Full Name</label>
+              <input style={inputStyle} placeholder="Jane Smith" type="text"
+                onFocus={e => (e.target.style.borderBottomColor = "#6b1f2a")}
+                onBlur={e => (e.target.style.borderBottomColor = "rgba(107,31,42,0.35)")}
+                {...register("name", { required: "Name is required" })} />
+              {errors.name && <p style={{ color: "#6b1f2a", fontSize: "11px", marginTop: "4px" }}>{errors.name.message}</p>}
             </div>
           )}
 
+          {/* Email field */}
           {(mode !== "otp-verify" && mode !== "reset-password") && (
             <div>
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Email Address</label>
-              <input
-                className="focus-ring mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm"
-                placeholder="you@example.com"
-                type="email"
-                {...register("email", { required: "Email is required" })}
-              />
-              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
+              <label style={labelStyle}>Email Address</label>
+              <input style={inputStyle} placeholder="you@example.com" type="email"
+                onFocus={e => (e.target.style.borderBottomColor = "#6b1f2a")}
+                onBlur={e => (e.target.style.borderBottomColor = "rgba(107,31,42,0.35)")}
+                {...register("email", { required: "Email is required" })} />
+              {errors.email && <p style={{ color: "#6b1f2a", fontSize: "11px", marginTop: "4px" }}>{errors.email.message}</p>}
             </div>
           )}
 
+          {/* OTP field */}
           {mode === "otp-verify" && (
             <div>
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Verification OTP Code</label>
-              <input
-                className="focus-ring mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-center text-lg font-bold tracking-widest"
-                placeholder="000000"
-                maxLength={6}
-                type="text"
-                {...register("otp", {
-                  required: "Verification OTP is required",
-                  pattern: { value: /^[0-9]{6}$/, message: "Must be a 6-digit number" }
-                })}
-              />
-              {errors.otp && <p className="mt-1 text-xs text-red-500">{errors.otp.message}</p>}
+              <label style={labelStyle}>Verification OTP Code</label>
+              <input style={{ ...inputStyle, textAlign: "center", fontSize: "20px", letterSpacing: "0.4em", fontWeight: 600 }}
+                placeholder="000000" maxLength={6} type="text"
+                onFocus={e => (e.target.style.borderBottomColor = "#6b1f2a")}
+                onBlur={e => (e.target.style.borderBottomColor = "rgba(107,31,42,0.35)")}
+                {...register("otp", { required: "OTP is required", pattern: { value: /^[0-9]{6}$/, message: "Must be 6 digits" } })} />
+              {errors.otp && <p style={{ color: "#6b1f2a", fontSize: "11px", marginTop: "4px" }}>{errors.otp.message}</p>}
             </div>
           )}
 
+          {/* Password field */}
           {(mode === "login" || mode === "register" || mode === "reset-password") && (
             <div>
-              <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Password</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <label style={labelStyle}>Password</label>
                 {mode === "login" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMode("forgot-password");
-                      setErrorMessage(null);
-                      setSuccessMessage(null);
-                    }}
-                    className="text-xs font-semibold text-brand hover:underline"
+                  <button type="button"
+                    onClick={() => { setMode("forgot-password"); setErrorMessage(null); setSuccessMessage(null); }}
+                    style={{ background: "none", border: "none", cursor: "pointer",
+                      fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.15em",
+                      textTransform: "uppercase", color: "rgba(107,31,42,0.6)" }}
                   >
                     Forgot?
                   </button>
                 )}
               </div>
-              <input
-                className="focus-ring mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm"
-                placeholder="••••••••"
-                type="password"
-                {...register("password", {
-                  required: "Password is required",
-                  minLength: { value: 8, message: "Password must be at least 8 characters" }
-                })}
-              />
-              {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+              <input style={inputStyle} placeholder="••••••••" type="password"
+                onFocus={e => (e.target.style.borderBottomColor = "#6b1f2a")}
+                onBlur={e => (e.target.style.borderBottomColor = "rgba(107,31,42,0.35)")}
+                {...register("password", { required: "Password is required", minLength: { value: 8, message: "At least 8 characters" } })} />
+              {errors.password && <p style={{ color: "#6b1f2a", fontSize: "11px", marginTop: "4px" }}>{errors.password.message}</p>}
             </div>
           )}
 
+          {/* Confirm Password */}
           {(mode === "register" || mode === "reset-password") && (
             <div>
-              <label className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Confirm Password</label>
-              <input
-                className="focus-ring mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm"
-                placeholder="••••••••"
-                type="password"
-                {...register("confirmPassword", {
-                  required: "Confirm Password is required",
-                  validate: (val) => val === passwordValue || "Passwords do not match"
-                })}
-              />
-              {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
+              <label style={labelStyle}>Confirm Password</label>
+              <input style={inputStyle} placeholder="••••••••" type="password"
+                onFocus={e => (e.target.style.borderBottomColor = "#6b1f2a")}
+                onBlur={e => (e.target.style.borderBottomColor = "rgba(107,31,42,0.35)")}
+                {...register("confirmPassword", { required: "Required", validate: (v) => v === passwordValue || "Passwords don't match" })} />
+              {errors.confirmPassword && <p style={{ color: "#6b1f2a", fontSize: "11px", marginTop: "4px" }}>{errors.confirmPassword.message}</p>}
             </div>
           )}
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={isLoading}
-            className="focus-ring mt-2 flex w-full items-center justify-center gap-2 rounded-lg bg-brand py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-75"
+            style={{
+              width: "100%", padding: "13px",
+              background: "linear-gradient(160deg, #6b1f2a, #4a151d)",
+              border: "none", borderRadius: "3px",
+              fontFamily: "var(--font-mono)", fontSize: "11px",
+              letterSpacing: "0.22em", textTransform: "uppercase",
+              color: "#f2e8d5", cursor: isLoading ? "not-allowed" : "pointer",
+              boxShadow: "0 10px 22px -8px rgba(107,31,42,0.6)",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+              opacity: isLoading ? 0.75 : 1, transition: "filter 150ms",
+            }}
+            onMouseEnter={e => { if (!isLoading) (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1.1)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1)"; }}
           >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Processing...
-              </>
-            ) : mode === "login" ? (
-              "Log In"
-            ) : mode === "register" ? (
-              "Create Account"
-            ) : mode === "otp-verify" ? (
-              "Verify Account"
-            ) : mode === "forgot-password" ? (
-              "Send Reset Link"
-            ) : (
-              "Save New Password"
-            )}
+            {isLoading ? <><Loader2 size={14} className="animate-spin" /> Processing…</> : btnLabel}
           </button>
         </form>
+
+        {/* Mode switcher note */}
+        {(mode === "login" || mode === "register") && (
+          <p style={{ textAlign: "center", marginTop: "20px", fontFamily: "var(--font-body)", fontSize: "13px", color: "#6b5a3a" }}>
+            {mode === "login"
+              ? <>New here?{" "}<button type="button" onClick={() => { setMode("register"); setErrorMessage(null); }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#6b1f2a", fontWeight: 600, fontFamily: "inherit" }}>
+                  Create an account
+                </button></>
+              : <>Already have an account?{" "}<button type="button" onClick={() => { setMode("login"); setErrorMessage(null); }}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "#6b1f2a", fontWeight: 600, fontFamily: "inherit" }}>
+                  Log in
+                </button></>
+            }
+          </p>
+        )}
       </section>
     </main>
   );

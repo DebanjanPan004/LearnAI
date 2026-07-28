@@ -132,7 +132,16 @@ export function DocumentsPage() {
             <button
               onClick={handleUploadClick}
               disabled={uploadMutation.isPending}
-              className="focus-ring inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-75"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: "8px",
+                background: "linear-gradient(135deg, #6b1f2a, #4a151d)",
+                border: "1px solid rgba(201,162,39,0.4)",
+                borderRadius: "4px", padding: "9px 18px",
+                fontFamily: "var(--font-mono)", fontSize: "11px",
+                letterSpacing: "0.18em", textTransform: "uppercase",
+                color: "#f2e8d5", cursor: uploadMutation.isPending ? "not-allowed" : "pointer",
+                opacity: uploadMutation.isPending ? 0.7 : 1,
+              }}
             >
               {uploadMutation.isPending ? (
                 <>
@@ -152,50 +161,49 @@ export function DocumentsPage() {
 
       {/* Error alert */}
       {uploadError && (
-        <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <AlertCircle className="mt-0.5 h-4.5 w-4.5 flex-shrink-0" />
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", background: "rgba(107,31,42,0.12)", border: "1px solid rgba(107,31,42,0.35)", borderRadius: "4px", padding: "12px 14px", marginBottom: "20px", fontFamily: "var(--font-body)", fontSize: "13px", color: "#6b1f2a" }}>
+          <AlertCircle size={14} style={{ flexShrink: 0, marginTop: "2px" }} />
           <span>{uploadError}</span>
         </div>
       )}
 
       {/* Search Bar */}
-      <div className="mb-6 flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3.5 shadow-soft">
-        <Search size={18} className="text-slate-400" />
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "rgba(22,51,39,0.4)", border: "1px solid rgba(201,162,39,0.2)", borderRadius: "6px", padding: "11px 14px", marginBottom: "24px", backdropFilter: "blur(4px)" }}>
+        <Search size={17} style={{ color: "rgba(201,162,39,0.55)", flexShrink: 0 }} />
         <input
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full text-sm outline-none placeholder:text-slate-400"
-          placeholder="Search PDFs, flashcards, chats, and notes"
+          style={{ width: "100%", background: "transparent", border: "none", outline: "none", fontFamily: "var(--font-body)", fontSize: "14px", color: "#f2e8d5" }}
+          placeholder="Search your manuscript library…"
         />
       </div>
 
       {/* Loading state */}
       {isLoading ? (
         <div className="flex h-64 flex-col items-center justify-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-brand" />
-          <p className="text-sm font-medium text-slate-500">Loading your library...</p>
+          <Loader2 size={32} className="animate-spin" style={{ color: "#c9a227" }} />
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(231,199,102,0.6)" }}>Opening your library…</p>
         </div>
       ) : isError ? (
-        <div className="flex h-64 flex-col items-center justify-center gap-3 text-red-600">
+        <div className="flex h-64 flex-col items-center justify-center gap-3" style={{ color: "rgba(107,31,42,0.8)" }}>
           <AlertCircle size={32} />
-          <p className="text-sm font-medium">Failed to retrieve documents. Please check server status.</p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: "14px" }}>Failed to retrieve documents. Please check server status.</p>
         </div>
       ) : filteredDocuments.length === 0 ? (
-        // Empty State
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-12 text-center shadow-soft">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-400">
-            <Inbox size={24} />
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px dashed rgba(201,162,39,0.25)", borderRadius: "8px", background: "rgba(31,69,54,0.2)", padding: "60px 24px", textAlign: "center" }}>
+          <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "48px", height: "48px", borderRadius: "50%", background: "rgba(201,162,39,0.1)", border: "1px solid rgba(201,162,39,0.25)" }}>
+            <Inbox size={22} style={{ color: "rgba(201,162,39,0.6)" }} />
           </span>
-          <h3 className="mt-4 text-lg font-bold text-ink">No documents found</h3>
-          <p className="mt-1 text-sm text-slate-500 max-w-sm">
-            {searchTerm ? "No documents match your search query." : "Upload a PDF, DOCX, TXT, or Markdown note to get started explaining concepts, generating flashcards, and taking practice quizzes."}
+          <h3 style={{ fontFamily: "var(--font-display)", fontSize: "22px", color: "#e7c766", margin: "16px 0 8px" }}>No manuscripts found</h3>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "rgba(242,232,213,0.55)", maxWidth: "380px", lineHeight: 1.7 }}>
+            {searchTerm ? "No documents match your search query." : "Upload a PDF, DOCX, TXT, or Markdown file to generate flashcards, quizzes, and AI summaries."}
           </p>
           {!searchTerm && (
             <button
               onClick={handleUploadClick}
-              className="focus-ring mt-6 inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              style={{ marginTop: "20px", display: "inline-flex", alignItems: "center", gap: "8px", background: "linear-gradient(135deg, #6b1f2a, #4a151d)", border: "1px solid rgba(201,162,39,0.4)", borderRadius: "4px", padding: "10px 20px", fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#f2e8d5", cursor: "pointer" }}
             >
-              <FileUp size={16} />
+              <FileUp size={15} />
               Upload first document
             </button>
           )}
@@ -206,50 +214,51 @@ export function DocumentsPage() {
           {filteredDocuments.map((doc) => (
             <article
               key={doc._id}
-              className="group relative flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-soft transition-all hover:border-slate-300 hover:shadow-md"
+              className="group relative flex flex-col justify-between"
+              style={{ background: "linear-gradient(160deg, #f2e8d5 0%, #e6d9bd 100%)", borderRadius: "6px", padding: "20px", boxShadow: "0 20px 50px -15px rgba(0,0,0,.5), 0 0 0 1px rgba(201,162,39,.3)", color: "#241a10" }}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex gap-3">
-                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 text-brand">
-                    <FileText size={20} />
+              {/* inner ornament */}
+              <span style={{ position: "absolute", inset: "8px", border: "1px solid rgba(201,162,39,0.2)", borderRadius: "3px", pointerEvents: "none" }} />
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "40px", height: "40px", flexShrink: 0, borderRadius: "6px", background: "rgba(107,31,42,0.12)", border: "1px solid rgba(107,31,42,0.25)" }}>
+                    <FileText size={19} style={{ color: "#6b1f2a" }} />
                   </span>
                   <div className="min-w-0">
-                    <h2 className="truncate font-semibold text-slate-800" title={doc.title}>
+                    <h2 className="truncate" style={{ fontFamily: "var(--font-display)", fontSize: "16px", color: "#241a10", margin: 0 }} title={doc.title}>
                       {doc.title}
                     </h2>
-                    <p className="mt-1 text-xs text-slate-400 uppercase font-semibold">
-                      {doc.type} File • {new Date(doc.createdAt).toLocaleDateString()}
+                    <p style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#6b5a3a", marginTop: "4px" }}>
+                      {doc.type} • {new Date(doc.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
-                
-                <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => handleDelete(doc._id)}
                     disabled={deleteMutation.isPending}
-                    className="focus-ring rounded-lg p-1.5 text-slate-400 hover:bg-slate-50 hover:text-coral transition-colors"
+                    style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(107,31,42,0.5)", padding: "4px" }}
                     title="Delete Document"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={15} />
                   </button>
                 </div>
               </div>
 
-              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-500">
-                  <Sparkles size={14} className="text-coral" /> Ready for AI tutor
+              <div style={{ marginTop: "16px", display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(201,162,39,0.2)", paddingTop: "12px" }}>
+                <span style={{ display: "flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#6b5a3a" }}>
+                  <Sparkles size={12} style={{ color: "#c9a227" }} /> AI Ready
                 </span>
-                
-                <div className="flex gap-2">
+                <div style={{ display: "flex", gap: "8px" }}>
                   <button
                     onClick={() => handleSummarize(doc)}
-                    className="focus-ring rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+                    style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.15em", textTransform: "uppercase", padding: "5px 10px", borderRadius: "3px", border: "1px solid rgba(107,31,42,0.3)", background: "transparent", color: "#6b1f2a", cursor: "pointer" }}
                   >
-                    Summarize
+                    Summarise
                   </button>
                   <button
                     onClick={() => navigate(`/quiz?documentId=${doc._id}`)}
-                    className="focus-ring rounded-lg bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-100"
+                    style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.15em", textTransform: "uppercase", padding: "5px 10px", borderRadius: "3px", background: "linear-gradient(135deg, #6b1f2a, #4a151d)", border: "1px solid rgba(201,162,39,0.3)", color: "#f2e8d5", cursor: "pointer" }}
                   >
                     Practice Quiz
                   </button>
@@ -262,60 +271,47 @@ export function DocumentsPage() {
 
       {/* Summary Modal overlay */}
       {summaryDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 px-4 py-6 backdrop-blur-sm" onClick={() => setSummaryDoc(null)}>
+        <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,23,18,0.75)", padding: "24px 16px", backdropFilter: "blur(6px)" }} onClick={() => setSummaryDoc(null)}>
           <div
-            className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-xl border border-slate-200 bg-white shadow-2xl transition-all animate-scale-in"
+            style={{ display: "flex", flexDirection: "column", maxHeight: "85vh", width: "100%", maxWidth: "680px", background: "linear-gradient(160deg, #f2e8d5 0%, #e6d9bd 100%)", borderRadius: "6px", boxShadow: "0 50px 90px -25px rgba(0,0,0,.8), 0 0 0 1px rgba(201,162,39,.4)", color: "#241a10", position: "relative" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+            <span style={{ position: "absolute", inset: "8px", border: "1px solid rgba(201,162,39,0.25)", borderRadius: "3px", pointerEvents: "none" }} />
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 24px", borderBottom: "1px solid rgba(201,162,39,0.2)" }}>
               <div className="min-w-0">
-                <h3 className="truncate font-bold text-slate-800 text-lg">AI Document Summary</h3>
-                <p className="truncate text-xs text-slate-400 font-semibold">{summaryDoc.title}</p>
+                <h3 style={{ fontFamily: "var(--font-display)", fontSize: "20px", margin: 0, color: "#241a10" }}>AI Document Summary</h3>
+                <p style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", color: "#6b5a3a", margin: "3px 0 0" }} className="truncate">{summaryDoc.title}</p>
               </div>
-              <button
-                onClick={() => setSummaryDoc(null)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition"
-              >
+              <button onClick={() => setSummaryDoc(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "rgba(107,31,42,0.5)", padding: "4px" }}>
                 <X size={18} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
               {summaryLoading ? (
-                <div className="flex h-48 flex-col items-center justify-center gap-3">
-                  <Loader2 className="h-8 w-8 animate-spin text-brand" />
-                  <p className="text-sm font-medium text-slate-500">Gemini is reading and summarizing your notes...</p>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "200px", gap: "12px" }}>
+                  <Loader2 size={28} className="animate-spin" style={{ color: "#6b1f2a" }} />
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "#6b5a3a" }}>Gemini is summarising your notes…</p>
                 </div>
               ) : (
-                <article className="prose prose-sm max-w-none text-slate-700 leading-relaxed">
+                <article className="prose prose-sm max-w-none leading-relaxed" style={{ color: "#241a10" }}>
                   <ReactMarkdown>{summaryText}</ReactMarkdown>
                 </article>
               )}
             </div>
 
             {!summaryLoading && (
-              <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-6 py-3 rounded-b-xl">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderTop: "1px solid rgba(201,162,39,0.2)", padding: "12px 24px", background: "rgba(0,0,0,0.05)", borderRadius: "0 0 6px 6px" }}>
                 <button
                   onClick={handleCopySummary}
                   disabled={!summaryText}
-                  className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.15em", textTransform: "uppercase", padding: "6px 12px", border: "1px solid rgba(107,31,42,0.3)", borderRadius: "3px", background: "transparent", color: "#6b1f2a", cursor: "pointer" }}
                 >
-                  {copied ? (
-                    <>
-                      <Check size={14} className="text-mint" />
-                      Copied!
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} />
-                      Copy to Clipboard
-                    </>
-                  )}
+                  {copied ? <><Check size={12} /> Copied!</> : <><Copy size={12} /> Copy</>}
                 </button>
-                
                 <button
                   onClick={() => setSummaryDoc(null)}
-                  className="focus-ring rounded-lg bg-brand px-4 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
+                  style={{ fontFamily: "var(--font-mono)", fontSize: "9px", letterSpacing: "0.15em", textTransform: "uppercase", padding: "6px 16px", background: "linear-gradient(135deg, #6b1f2a, #4a151d)", border: "1px solid rgba(201,162,39,0.3)", borderRadius: "3px", color: "#f2e8d5", cursor: "pointer" }}
                 >
                   Close
                 </button>

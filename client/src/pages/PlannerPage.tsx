@@ -62,40 +62,38 @@ export function PlannerPage() {
       
       <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
         {/* Form input panel */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-soft h-fit">
-          <h2 className="mb-4 text-base font-bold text-ink flex items-center gap-2">
-            <CalendarDays size={18} className="text-brand" /> Plan Your Exam Prep
+        <div style={{ background: "rgba(22,51,39,0.45)", border: "1px solid rgba(201,162,39,0.2)", borderRadius: "8px", padding: "24px", backdropFilter: "blur(4px)", height: "fit-content" }}>
+          <h2 style={{ marginBottom: "16px", fontFamily: "var(--font-display)", color: "#e7c766", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <CalendarDays size={18} style={{ color: "#c9a227" }} /> Plan Your Exam Prep
           </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Target Exam Name</label>
+              <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(231,199,102,0.6)", marginBottom: "8px" }}>Target Exam Name</label>
               <input
                 value={exam}
                 onChange={(e) => setExam(e.target.value)}
-                className="focus-ring mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm"
+                style={{ width: "100%", background: "rgba(31,69,54,0.35)", border: "1px solid rgba(201,162,39,0.2)", borderRadius: "4px", padding: "10px 12px", fontFamily: "var(--font-body)", fontSize: "14px", color: "#f2e8d5", outline: "none" }}
                 placeholder="Gate CS, Semester Finals, Tech Interview"
                 required
               />
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Days Available</label>
+              <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(231,199,102,0.6)", marginBottom: "8px" }}>Days Available</label>
               <input
-                type="number"
-                value={days}
+                type="number" value={days}
                 onChange={(e) => setDays(Number(e.target.value))}
-                className="focus-ring mt-1.5 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm"
-                min={1}
-                required
+                style={{ width: "100%", background: "rgba(31,69,54,0.35)", border: "1px solid rgba(201,162,39,0.2)", borderRadius: "4px", padding: "10px 12px", fontFamily: "var(--font-body)", fontSize: "14px", color: "#f2e8d5", outline: "none" }}
+                min={1} required
               />
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Subjects to Cover (comma-separated)</label>
+              <label style={{ display: "block", fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(231,199,102,0.6)", marginBottom: "8px" }}>Subjects (comma-separated)</label>
               <textarea
                 value={subjectsString}
                 onChange={(e) => setSubjectsString(e.target.value)}
-                className="focus-ring mt-1.5 h-28 w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm"
+                style={{ width: "100%", height: "100px", background: "rgba(31,69,54,0.35)", border: "1px solid rgba(201,162,39,0.2)", borderRadius: "4px", padding: "10px 12px", fontFamily: "var(--font-body)", fontSize: "14px", color: "#f2e8d5", outline: "none", resize: "vertical" }}
                 placeholder="DBMS, Operating Systems, Data Structures, Computer Networks"
                 required
               />
@@ -104,53 +102,44 @@ export function PlannerPage() {
             <button
               type="submit"
               disabled={plannerMutation.isPending}
-              className="focus-ring w-full flex items-center justify-center gap-2 rounded-lg bg-brand py-3 text-sm font-bold text-white transition hover:bg-blue-700 disabled:opacity-75"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", background: "linear-gradient(135deg, #6b1f2a, #4a151d)", border: "1px solid rgba(201,162,39,0.4)", borderRadius: "4px", padding: "12px", fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.18em", textTransform: "uppercase", color: "#f2e8d5", cursor: plannerMutation.isPending ? "not-allowed" : "pointer", opacity: plannerMutation.isPending ? 0.7 : 1 }}
             >
-              {plannerMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4.5 w-4.5 animate-spin" />
-                  Generating Timetable...
-                </>
-              ) : (
-                <>
-                  <CalendarDays size={18} />
-                  Generate Timetable
-                </>
-              )}
+              {plannerMutation.isPending ? <><Loader2 size={14} className="animate-spin" /> Generating…</> : <><CalendarDays size={15} /> Generate Timetable</>}
             </button>
           </form>
 
           {formError && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3.5 text-sm text-red-700">
-              <AlertCircle className="mt-0.5 h-4.5 w-4.5 flex-shrink-0" />
+            <div style={{ marginTop: "14px", display: "flex", alignItems: "flex-start", gap: "8px", background: "rgba(107,31,42,0.12)", border: "1px solid rgba(107,31,42,0.35)", borderRadius: "4px", padding: "12px 14px", fontFamily: "var(--font-body)", fontSize: "13px", color: "rgba(107,31,42,0.9)" }}>
+              <AlertCircle size={14} style={{ flexShrink: 0, marginTop: "2px" }} />
               <span>{formError}</span>
             </div>
           )}
         </div>
 
         {/* Timetable schedule panel */}
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-soft min-h-[500px] flex flex-col">
-          <h2 className="mb-4 text-base font-bold text-ink flex items-center gap-2 border-b border-slate-100 pb-3">
-            <Sparkles size={18} className="text-coral" /> Customized Study Timetable
+        <div style={{ background: "rgba(10,23,18,0.5)", border: "1px solid rgba(201,162,39,0.2)", borderRadius: "8px", padding: "24px", backdropFilter: "blur(4px)", minHeight: "500px", display: "flex", flexDirection: "column" }}>
+          <h2 style={{ marginBottom: "4px", fontFamily: "var(--font-display)", color: "#e7c766", fontSize: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <Sparkles size={18} style={{ color: "#c9a227" }} /> Your Study Timetable
           </h2>
-          
-          <div className="flex-1 overflow-y-auto max-h-[600px] pr-1">
+          <div style={{ height: "1px", background: "linear-gradient(90deg, transparent, rgba(201,162,39,0.3), transparent)", margin: "10px 0 16px" }} />
+
+          <div style={{ flex: 1, overflowY: "auto", maxHeight: "600px", paddingRight: "4px" }}>
             {plannerMutation.isPending ? (
               <div className="flex h-64 flex-col items-center justify-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-brand" />
-                <p className="text-sm font-medium text-slate-500">Gemini is designing your exam study timetable...</p>
+                <Loader2 size={28} className="animate-spin" style={{ color: "#c9a227" }} />
+                <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", color: "rgba(231,199,102,0.6)" }}>Gemini is crafting your timetable…</p>
               </div>
             ) : (
-              <article className="prose prose-sm max-w-none text-slate-700 leading-relaxed">
+              <article className="prose prose-sm max-w-none leading-relaxed" style={{ color: "rgba(242,232,213,0.85)" }}>
                 <ReactMarkdown>{scheduleMarkdown}</ReactMarkdown>
               </article>
             )}
           </div>
 
           {!plannerMutation.isPending && plannerMutation.isSuccess && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-100 bg-emerald-50 p-3 text-xs text-emerald-800 font-medium">
-              <Check size={16} className="text-emerald-600" />
-              Plan successfully generated! Feel free to copy these items to your calendar.
+            <div style={{ marginTop: "16px", display: "flex", alignItems: "center", gap: "8px", background: "rgba(31,69,54,0.4)", border: "1px solid rgba(31,69,54,0.6)", borderRadius: "4px", padding: "10px 14px", fontFamily: "var(--font-body)", fontSize: "13px", color: "rgba(163,217,177,0.9)" }}>
+              <Check size={15} style={{ color: "#a3d9b1" }} />
+              Plan generated! Copy these items to your calendar.
             </div>
           )}
         </div>

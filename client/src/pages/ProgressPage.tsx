@@ -10,13 +10,9 @@ interface AccuracyItem {
 }
 
 export function ProgressPage() {
-  // Query progress statistics
   const { data: progressData, isLoading } = useQuery({
     queryKey: ["progress-metrics"],
-    queryFn: async () => {
-      const res = await api.get("/progress");
-      return res.data;
-    }
+    queryFn: async () => (await api.get("/progress")).data,
   });
 
   const accuracy = progressData?.accuracyBreakdown || [];
@@ -24,36 +20,80 @@ export function ProgressPage() {
   return (
     <>
       <PageHeader eyebrow="Progress" title="Spot strengths and weak topics" />
-      
+
       {isLoading ? (
         <div className="flex h-64 flex-col items-center justify-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-brand" />
-          <p className="text-sm font-medium text-slate-500">Retrieving progress reports...</p>
+          <Loader2 size={32} className="animate-spin" style={{ color: "#c9a227" }} />
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "11px", letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(231,199,102,0.6)" }}>
+            Retrieving progress…
+          </p>
         </div>
       ) : accuracy.length === 0 ? (
-        // Empty state if no quizzes attempted
-        <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white p-12 text-center shadow-soft">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-400">
-            <HelpCircle size={20} />
+        <div style={{
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          border: "1px dashed rgba(201,162,39,0.25)", borderRadius: "8px",
+          background: "rgba(31,69,54,0.2)", padding: "60px 24px", textAlign: "center",
+        }}>
+          <span style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            width: "48px", height: "48px", borderRadius: "50%",
+            background: "rgba(201,162,39,0.1)", border: "1px solid rgba(201,162,39,0.25)",
+          }}>
+            <HelpCircle size={22} style={{ color: "rgba(201,162,39,0.6)" }} />
           </span>
-          <h3 className="mt-4 text-base font-bold text-ink">No progress logged</h3>
-          <p className="mt-1 text-sm text-slate-500 max-w-sm">
-            Generate and attempt practice quizzes in the **Quizzes** section. Once scored, your topic-wise accuracy analytics will appear here!
+          <h3 style={{ fontFamily: "var(--font-display)", fontSize: "22px", color: "#e7c766", margin: "16px 0 8px" }}>
+            No progress logged yet
+          </h3>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: "14px", color: "rgba(242,232,213,0.55)", maxWidth: "380px", lineHeight: 1.7 }}>
+            Generate and attempt practice quizzes in the Quizzes section. Once scored, your topic‑wise accuracy analytics will appear here!
           </p>
         </div>
       ) : (
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="text-lg font-semibold">Quiz accuracy</h2>
-          <p className="text-xs text-slate-400 mt-1 font-medium">Your average score percentage by document topic category.</p>
-          
-          <div className="mt-6 h-80">
+        <section style={{
+          background: "rgba(22,51,39,0.4)", border: "1px solid rgba(201,162,39,0.2)",
+          borderRadius: "8px", padding: "24px", backdropFilter: "blur(4px)",
+        }}>
+          <h2 style={{ fontFamily: "var(--font-display)", color: "#e7c766", fontSize: "20px", margin: "0 0 4px" }}>
+            Quiz Accuracy
+          </h2>
+          <p style={{ fontFamily: "var(--font-mono)", fontSize: "10px", letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(231,199,102,0.5)", margin: "0 0 24px" }}>
+            Average score % by document topic
+          </p>
+
+          <div style={{ height: "320px" }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={accuracy}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="topic" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip />
-                <Bar dataKey="score" fill="#16a085" radius={[6, 6, 0, 0]} />
+                <defs>
+                  <linearGradient id="barGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#c9a227" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#6b1f2a" stopOpacity={0.7} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(201,162,39,0.1)" />
+                <XAxis
+                  dataKey="topic"
+                  tick={{ fill: "rgba(231,199,102,0.55)", fontSize: 11, fontFamily: "IBM Plex Mono" }}
+                  axisLine={{ stroke: "rgba(201,162,39,0.2)" }}
+                  tickLine={false}
+                />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fill: "rgba(231,199,102,0.55)", fontSize: 11, fontFamily: "IBM Plex Mono" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <Tooltip
+                  contentStyle={{
+                    background: "#163327",
+                    border: "1px solid rgba(201,162,39,0.35)",
+                    borderRadius: "4px",
+                    fontFamily: "IBM Plex Mono",
+                    fontSize: "12px",
+                    color: "#e7c766",
+                  }}
+                  cursor={{ fill: "rgba(201,162,39,0.05)" }}
+                />
+                <Bar dataKey="score" fill="url(#barGrad)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
