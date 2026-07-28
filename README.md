@@ -1,64 +1,120 @@
-# LearnAI
+# LearnAI 🧠✨
 
-AI-Powered Smart Learning Platform
+LearnAI is an advanced, full-stack AI-Powered Smart Learning Platform designed to help students learn, practice, and master concepts from their own study materials. By combining modern text processing with local semantic keyword indexing and the Gemini API, LearnAI serves as a personalized AI tutor that operates directly on your uploaded notes, slides, and textbooks.
 
-**Upload. Learn. Practice. Master.**
+---
 
-LearnAI is a full-stack learning assistant where students upload PDFs, DOCX files, notes, slides, TXT, or Markdown files and receive summaries, concept explanations, flashcards, quizzes, RAG-based answers, progress tracking, bookmarks, and personalized study plans.
+## 🚀 Key Features
 
-## Tech Stack
+* **🔑 Secure Authentication & User Control:** 
+  * Full registration and login flows protected by JWT & bcrypt.
+  * 6-digit email verification OTP code validation.
+  * Secure password recovery and token reset mechanisms.
+* **📄 Document Upload & Automatic Ingestion:**
+  * Support for bulk uploading PDF, DOCX, TXT, and Markdown files.
+  * Automated background text extraction and paragraph segmentation.
+* **💬 AI Tutor Chat (RAG):**
+  * Interact with an intelligent study assistant whitelisted to your documents.
+  * Utilizes a high-accuracy, rate-limit-compliant local keyword indexing search to retrieve context.
+  * Displays source references in the chat interface for citation checks.
+* **🎴 Flashcards & Practice Quizzes:**
+  * Auto-generates recall flashcards from specific documents with interactive flipping card interfaces.
+  * Creates mixed-type quizzes (MCQ, True/False, fill-in-the-blanks) and records score metrics.
+* **📅 Study Timetable Planner:**
+  * Design custom exam-prep calendars by specifying days and subjects.
+* **📊 Analytics Dashboard:**
+  * Live tracking of study streaks, total files, flashcards created, and average quiz accuracy.
+  * Visual progress charts powered by Recharts plotting weekly times and topic accuracies.
 
-- **Client:** React 19, TypeScript, Tailwind CSS, React Router, Redux Toolkit, TanStack Query, Axios, React Hook Form, Framer Motion, Recharts, React Markdown, Lucide React
-- **Server:** Node.js, Express, JWT, bcrypt, Multer, Nodemailer, Express Validator, Morgan, CORS, Helmet
-- **Database:** MongoDB Atlas
-- **AI:** Gemini API, LangChain, ChromaDB, Google or Hugging Face embeddings
-- **Document Processing:** pdf-parse, mammoth, Tesseract.js for scanned PDFs
+---
 
-## Project Structure
+## 🛠️ Tech Stack
+
+### Frontend (Client)
+* **Framework:** React (Vite) + TypeScript
+* **State Management:** Redux Toolkit (Auth sessions)
+* **Queries & Mutations:** TanStack Query (React Query)
+* **Styling:** Tailwind CSS + Lucide Icons
+* **Charts:** Recharts
+* **Markdown Rendering:** React Markdown
+
+### Backend (Server)
+* **Runtime:** Node.js + Express + TypeScript
+* **Database:** MongoDB Atlas + Mongoose
+* **AI Engine:** Google Generative AI (`gemini-flash-latest` & `gemini-embedding-001`)
+* **Document Parsing:** pdf-parse, mammoth
+* **Email Dispatcher:** Nodemailer (with Console fallback in development)
+
+---
+
+## 📂 Project Structure
 
 ```text
 LearnAI/
-  client/   React frontend
-  server/   Express API, database models, auth, upload, progress
-  ai/       RAG, prompts, summaries, quizzes, flashcards, study plans
-  shared/   Shared TypeScript contracts
-  docs/     Product and API documentation
+  ├── client/        # Vite React Frontend application
+  │    ├── src/
+  │    │    ├── components/    # Reusable UI elements (metric cards, headers)
+  │    │    ├── layouts/       # Protected sidebar wrapper
+  │    │    ├── pages/         # Chat, dashboard, docs, quizzes, planner, progress
+  │    │    └── redux/         # Store config & auth slices
+  ├── server/        # Express API Server application
+  │    ├── src/
+  │    │    ├── config/        # Mongoose Database connections
+  │    │    ├── controllers/   # Request-response logic handlers
+  │    │    ├── models/        # MongoDB schemas (User, Chunk, Document, Quiz, Progress)
+  │    │    ├── routes/        # Router bindings
+  │    │    └── services/      # Gemini integration, local RAG indexers, email utilities
+  └── shared/        # Shared TypeScript contracts & interfaces
 ```
 
-## Quick Start
+---
 
-1. Install dependencies in each app:
+## ⚙️ Quick Start
 
+### 1. Prerequisites
+Ensure you have node.js (v18+) and npm installed locally.
+
+### 2. Install Dependencies
+Run the install command inside both directories:
 ```bash
-cd client && npm install
-cd ../server && npm install
+# Install server dependencies
+cd server
+npm install
+
+# Install client dependencies
+cd ../client
+npm install
 ```
 
-2. Copy environment files:
+### 3. Environment Setup
+Configure your environment keys. Create `.env` files in both directories based on the example templates:
 
+**In `server/.env`:**
+```env
+PORT=5000
+MONGODB_URI=your-mongodb-connection-string
+JWT_SECRET=your-secret-key
+GEMINI_API_KEY=your-gemini-key
+```
+
+**In `client/.env`:**
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
+### 4. Running the Project
+Launch the local development servers simultaneously:
+
+**Start Backend Server:**
 ```bash
-cp server/.env.example server/.env
-cp client/.env.example client/.env
+cd server
+npm run dev
 ```
 
-3. Fill in MongoDB, JWT, Gemini, ChromaDB, and email settings.
-
-4. Run both apps:
-
+**Start Frontend Application:**
 ```bash
-cd server && npm run dev
-cd client && npm run dev
+cd client
+npm run dev
 ```
 
-## Core Features
-
-- Authentication with register, login, reset password, and email verification
-- Dashboard with streaks, documents, flashcards, quizzes, AI chats, progress, and score
-- Document upload and parsing for PDF, DOCX, TXT, and Markdown
-- AI summaries with important topics, formulae, and interview questions
-- AI tutor with retrieval from uploaded study material
-- Flashcard and quiz generation
-- Chat interface with RAG-first behavior
-- Study planner for exam preparation
-- Progress charts, bookmarks, search, profile achievements, and badges
-
+Visit **[http://localhost:5173](http://localhost:5173)** in your browser to start studying!
