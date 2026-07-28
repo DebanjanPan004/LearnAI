@@ -29,14 +29,14 @@ export async function register(req: Request, res: Response) {
     password: await bcrypt.hash(password, 12),
     verificationToken: otp,
     verificationTokenExpires: otpExpires,
-    emailVerified: false
+    emailVerified: true // Set to true by default to bypass OTP verification
   });
 
-  sendVerificationEmail(user.email, otp).catch(console.error);
+  // sendVerificationEmail(user.email, otp).catch(console.error);
 
   res.status(201).json({
     token: signToken(user.id),
-    user: { id: user.id, name: user.name, email: user.email, emailVerified: false }
+    user: { id: user.id, name: user.name, email: user.email, emailVerified: true }
   });
 }
 
@@ -50,7 +50,7 @@ export async function login(req: Request, res: Response) {
 
   res.json({
     token: signToken(user.id),
-    user: { id: user.id, name: user.name, email: user.email, emailVerified: user.emailVerified }
+    user: { id: user.id, name: user.name, email: user.email, emailVerified: true } // Bypass email OTP verification
   });
 }
 
