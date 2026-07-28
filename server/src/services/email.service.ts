@@ -25,6 +25,32 @@ function createTransport() {
 const transport = createTransport();
 const from = process.env.EMAIL_FROM ?? "LearnAI <learnai@example.com>";
 
+async function sendEmailViaResend(to: string, subject: string, html: string): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return false;
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      from: process.env.EMAIL_FROM || "onboarding@resend.dev",
+      to,
+      subject,
+      html
+    })
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("Resend API error:", errText);
+    return false;
+  }
+  return true;
+}
+
 export async function sendVerificationEmail(email: string, otp: string) {
   const subject = "Verify your LearnAI account";
   const html = `
@@ -39,6 +65,15 @@ export async function sendVerificationEmail(email: string, otp: string) {
       <p style="font-size: 12px; color: #64748b;">LearnAI - Upload. Learn. Practice. Master.</p>
     </div>
   `;
+
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const sent = await sendEmailViaResend(email, subject, html);
+      if (sent) return;
+    } catch (e) {
+      console.error("Failed to send verification email via Resend, falling back:", e);
+    }
+  }
 
   if (!transport) {
     console.log("\n==================================================");
@@ -86,6 +121,15 @@ export async function sendPasswordResetEmail(email: string, token: string) {
       <p style="font-size: 12px; color: #64748b;">LearnAI - Upload. Learn. Practice. Master.</p>
     </div>
   `;
+
+  if (process.env.RESEND_API_KEY) {
+    try {
+      const sent = await sendEmailViaResend(email, subject, html);
+      if (sent) return;
+    } catch (e) {
+      console.error("Failed to send password reset email via Resend, falling back:", e);
+    }
+  }
 
   if (!transport) {
     console.log("\n==================================================");
