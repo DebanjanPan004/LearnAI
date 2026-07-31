@@ -1,5 +1,5 @@
 import { BookOpen, Brain, FileText, GraduationCap, LayoutDashboard, LineChart, MessageSquare, NotebookTabs, LogOut, User as UserIcon, Menu, X } from "lucide-react";
-import { NavLink, Outlet, Navigate, useNavigate } from "react-router-dom";
+import { NavLink, Link, Outlet, Navigate, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { useState } from "react";
 import { logout } from "../redux/authSlice";
@@ -43,7 +43,7 @@ export function AppLayout() {
       >
         {/* Brand */}
         <div className="px-5 pt-6 pb-5" style={{ borderBottom: "1px solid rgba(201,162,39,0.15)" }}>
-          <div className="flex items-center gap-3">
+          <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <span
               className="flex h-10 w-10 items-center justify-center rounded-lg"
               style={{ background: "linear-gradient(135deg, #6b1f2a, #4a151d)", boxShadow: "0 0 0 1px rgba(201,162,39,0.4)" }}
@@ -64,7 +64,7 @@ export function AppLayout() {
                 Your Study Shelf
               </p>
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Nav */}
@@ -138,7 +138,7 @@ export function AppLayout() {
           borderBottom: "1px solid rgba(201,162,39,0.2)",
         }}
       >
-        <div className="flex items-center gap-2.5">
+        <Link to="/dashboard" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
           <span
             className="flex h-9 w-9 items-center justify-center rounded-lg"
             style={{ background: "linear-gradient(135deg, #6b1f2a, #4a151d)", boxShadow: "0 0 0 1px rgba(201,162,39,0.4)" }}
@@ -148,7 +148,7 @@ export function AppLayout() {
           <span style={{ fontFamily: "var(--font-display)", color: "#e7c766", fontSize: "18px", letterSpacing: "0.04em" }}>
             LearnAI
           </span>
-        </div>
+        </Link>
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="rounded-md p-1.5 transition"
